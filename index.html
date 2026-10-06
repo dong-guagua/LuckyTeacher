@@ -60,7 +60,9 @@ const $=id=>document.getElementById(id);
 const PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
 let opts=[],k=1,mode='auto',vals=[];
 const DEF="玥宝\n小冉\n晚晚\n甜甜圈\n酥鲤鲤\n芋圆\n赛利亚\nLucky\n小泽\n曼曼\n小乖\n香奈儿";
-try{$('list').value=localStorage.getItem('dp_list2')||DEF}catch(e){$('list').value=DEF}
+function shuf(a){a=a.slice();const b=new Uint32Array(1);for(let i=a.length-1;i>0;i--){let x;do{crypto.getRandomValues(b);x=b[0]}while(x>=Math.floor(4294967296/(i+1))*(i+1));const j=x%(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+let saved=null;try{saved=localStorage.getItem('dp_list3')}catch(e){}
+$('list').value=saved||shuf(DEF.split('\n')).join('\n');
 const FT={1:'rotateY(0deg)',6:'rotateY(180deg)',2:'rotateY(90deg)',5:'rotateY(-90deg)',3:'rotateX(90deg)',4:'rotateX(-90deg)'};
 const FV={1:[0,0],6:[0,180],2:[0,-90],5:[0,90],3:[-90,0],4:[90,0]};
 function dieEl(){const d=document.createElement('div');d.className='die';const c=document.createElement('div');c.className='cube';
@@ -76,7 +78,7 @@ function showDice(a,spin){const w=$('dice');
 function rnd6(){const b=new Uint32Array(1);let x;do{crypto.getRandomValues(b);x=b[0]}while(x>=4294967292);return x%6+1}
 function parse(){
  opts=$('list').value.split('\n').map(s=>s.trim()).filter(Boolean);
- try{localStorage.setItem('dp_list2',$('list').value)}catch(e){}
+ 
  const n=opts.length;
  k=1;while(Math.pow(6,k)<n)k++;
  if(n<2){$('info').textContent='至少需要 2 个选项';k=1}
@@ -102,7 +104,7 @@ $('roll').onclick=()=>{
  const btn=$('roll');btn.disabled=true;$('res').textContent='';$('note').textContent='';
  const d=Array.from({length:k},rnd6);showDice(d,true);
  setTimeout(()=>{calc(d);btn.disabled=false},1050)};
-$('list').oninput=parse;
+$('list').oninput=()=>{try{localStorage.setItem('dp_list3',$('list').value)}catch(e){}parse()};
 function setMode(m){mode=m;$('auto').classList.toggle('hide',m!=='auto');$('manual').classList.toggle('hide',m!=='manual');
  $('t1').className=m==='auto'?'on':'';$('t2').className=m==='manual'?'on':'';vals=[];showDice(Array(k).fill(0),false);buildPicks();$('res').textContent='';$('note').textContent=''}
 $('t1').onclick=()=>setMode('auto');$('t2').onclick=()=>setMode('manual');
