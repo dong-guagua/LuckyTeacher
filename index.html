@@ -26,7 +26,10 @@ button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 .face{position:absolute;inset:0;border-radius:10px;background:#fff;border:2px solid #333;box-sizing:border-box;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:8px;backface-visibility:hidden}
 .face i{width:11px;height:11px;border-radius:50%;background:#222;place-self:center}
 .face.red i{background:#d9482b}
-.result{text-align:center;font-size:30px;font-weight:700;color:var(--acc);min-height:44px;word-break:break-all}
+.row{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;padding:8px 0;border-top:1px solid var(--line)}
+.row b{font-size:14px;color:var(--mut);min-width:48px}
+.row .nm{font-size:22px;font-weight:700;color:var(--acc);word-break:break-all}
+.row .mut{font-size:12px}
 .note{text-align:center;font-size:14px;color:var(--mut);min-height:40px}
 .pick{display:flex;gap:6px;justify-content:center;margin:6px 0}
 .pick button{width:40px;padding:8px 0}
@@ -50,7 +53,7 @@ button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 <div class="dice" id="dice"></div>
 <div id="auto"><button class="go" id="roll">掷骰子</button></div>
 <div id="manual" class="hide"><div class="mut" style="text-align:center">把 Telegram 里 🎲 的点数按顺序点进来</div><div id="picks"></div></div>
-<div class="result" id="res"></div>
+<div id="hist"></div><button id="clr" class="hide" style="width:100%;margin-top:8px">清空记录</button>
 <div class="note" id="note"></div>
 </div>
 <p class="mut">规则：用最少的骰子数 k 组成 N=1..6^k；有效范围取不超过 6^k 的选项数最大整数倍，超出作废重掷；有效时选项=((N−1) mod 选项数)+1。自动模式使用浏览器加密级随机数。</p>
@@ -84,29 +87,35 @@ function parse(){
  if(n<2){$('info').textContent='至少需要 2 个选项';k=1}
  else{const tot=Math.pow(6,k),valid=Math.floor(tot/n)*n;
   $('info').textContent=`${n} 个选项 → 用 ${k} 个骰子（共 ${tot} 种），有效 1–${valid}，`+(tot>valid?`${valid+1}–${tot} 作废重掷（${((tot-valid)/tot*100).toFixed(1)}%）`:'无需重掷')}
- vals=[];showDice(Array(k).fill(0),false);buildPicks();$('res').textContent='';$('note').textContent=''}
+ vals=[];showDice(Array(k).fill(0),false);buildPicks();$('note').textContent=''}
 function buildPicks(){const p=$('picks');p.innerHTML='';
  for(let i=0;i<k;i++){const row=document.createElement('div');row.className='pick';
   const s=document.createElement('span');s.textContent='第'+(i+1);row.appendChild(s);
   for(let v=1;v<=6;v++){const b=document.createElement('button');b.textContent=v;b.className=vals[i]===v?'on':'';
-   b.onclick=()=>{vals[i]=v;showDice(Array.from({length:k},(_,j)=>vals[j]||0),false);buildPicks();if(vals.filter(Boolean).length===k)calc(vals.slice())};row.appendChild(b)}
+   b.onclick=()=>{vals[i]=v;showDice(Array.from({length:k},(_,j)=>vals[j]||0),false);buildPicks();if(vals.filter(Boolean).length===k){calc(vals.slice());vals=[];buildPicks()}};row.appendChild(b)}
   p.appendChild(row)}}
 function calc(d){
  const n=opts.length;if(n<2)return null;
  let N=0;d.forEach(v=>N=N*6+(v-1));N+=1;
  const tot=Math.pow(6,k),valid=Math.floor(tot/n)*n;
- if(N>valid){$('res').textContent='作废';$('note').textContent=`N=${N} 超出有效范围 1–${valid}，请重掷`;return null}
+ if(N>valid){$('note').textContent=`点数 ${d.join(' , ')} → N=${N} 超出有效范围 1–${valid}，作废，请重掷`;return null}
  const o=(N-1)%n+1;
- $('res').textContent=`${o}. ${opts[o-1]}`;
- $('note').textContent=`点数 ${d.join(' , ')} → N=${N} → 选项 ${o}`;return o}
+ $('note').textContent='';addRow(o,N,d);return o}
+let cnt=0;
+function addRow(o,N,d){cnt++;const r=document.createElement('div');r.className='row';
+ const a=document.createElement('b');a.textContent='第'+cnt+'抽';
+ const b=document.createElement('span');b.className='nm';b.textContent=o+'. '+opts[o-1];
+ const c=document.createElement('span');c.className='mut';c.textContent='点数 '+d.join(',')+' → N='+N;
+ r.append(a,b,c);$('hist').prepend(r);$('clr').classList.remove('hide')}
+$('clr').onclick=()=>{cnt=0;$('hist').innerHTML='';$('clr').classList.add('hide')};
 $('roll').onclick=()=>{
  if(opts.length<2)return;
- const btn=$('roll');btn.disabled=true;$('res').textContent='';$('note').textContent='';
+ const btn=$('roll');btn.disabled=true;$('note').textContent='';
  const d=Array.from({length:k},rnd6);showDice(d,true);
  setTimeout(()=>{calc(d);btn.disabled=false},1050)};
 $('list').oninput=()=>{try{localStorage.setItem('dp_list3',$('list').value)}catch(e){}parse()};
 function setMode(m){mode=m;$('auto').classList.toggle('hide',m!=='auto');$('manual').classList.toggle('hide',m!=='manual');
- $('t1').className=m==='auto'?'on':'';$('t2').className=m==='manual'?'on':'';vals=[];showDice(Array(k).fill(0),false);buildPicks();$('res').textContent='';$('note').textContent=''}
+ $('t1').className=m==='auto'?'on':'';$('t2').className=m==='manual'?'on':'';vals=[];showDice(Array(k).fill(0),false);buildPicks();$('note').textContent=''}
 $('t1').onclick=()=>setMode('auto');$('t2').onclick=()=>setMode('manual');
 parse();
 </script>
