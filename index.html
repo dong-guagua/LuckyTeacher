@@ -62,7 +62,7 @@ button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 const $=id=>document.getElementById(id);
 const PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
 let opts=[],k=1,mode='auto',vals=[];
-const DEF="玥宝\n小冉\n晚晚\n甜甜圈\n酥鲤鲤\n芋圆\n赛利亚\nLucky\n小泽\n小乖\n香奈儿\n法拉利";
+const DEF="玥宝\n小冉\n晚晚\n甜甜圈\n酥鲤鲤\n芋圆\n赛利亚\nLucky\n小泽\n小乖\n香奈儿\n法拉利\n小糖果\n阮伊诺\n小酒\n吉娜\n泡泡\n曼曼";
 function shuf(a){a=a.slice();const b=new Uint32Array(1);for(let i=a.length-1;i>0;i--){let x;do{crypto.getRandomValues(b);x=b[0]}while(x>=Math.floor(4294967296/(i+1))*(i+1));const j=x%(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
 let saved=null;try{saved=localStorage.getItem('dp_list3')}catch(e){}
 $('list').value=saved||shuf(DEF.split('\n')).join('\n');
