@@ -230,7 +230,7 @@ function buildBoard(){
   RING.forEach((p,i)=>makeCell(p[0],p[1],CONFIG.ring[i]));
   CONFIG.stretch.forEach((arr,pi)=>arr.forEach((d,j)=>makeCell(STRETCH_POS[pi][j][0],STRETCH_POS[pi][j][1],d,'s'+pi)));
   const fin=document.createElement('div'); fin.id='finish'; fin.innerHTML='<span class="lbl">终点</span><div class="pieces"></div>'; board.appendChild(fin);
-  const t=document.createElement('div'); t.id='title'; t.innerHTML='<strong>情侣飞行棋</strong><span>先到终点者获胜</span>'; board.appendChild(t);
+  const t=document.createElement('div'); t.id='title'; t.innerHTML='<strong></strong><span>先到终点者获胜</span>'; board.appendChild(t);
   ['d1','d2'].forEach(id=>{const d=document.createElement('div'); d.id=id; d.className='deco'; d.textContent='♥ ♥ ♥'; board.appendChild(d);});
 }
 
