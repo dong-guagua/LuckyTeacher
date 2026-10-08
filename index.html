@@ -7,60 +7,58 @@
 <style>
 :root{
   --bg:#1f1a33; --panel:#2b2547; --tile:#f8f1f4; --ink:#2a2140;
-  --p1:#4d8dff; --p2:#ffb82e; --rose:#ff6b8b; --green:#5bc48a; --purple:#6b3fa0;
-  --s:min(calc((100vw - 16px) / 11), 60px);
+  --p1:#4d8dff; --p2:#ffb82e; --rose:#ff6b8b; --purple:#6b3fa0;
+  --s:min(calc((100vw - 12px) / 13), 58px);
+  --h:calc(var(--s) * .86);
 }
 *{box-sizing:border-box;margin:0}
 html,body{background:var(--bg);color:#f4eefc;font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif}
-body{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px 8px 40px}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px 6px 40px}
 h1{font-size:20px;letter-spacing:.12em;margin:4px 0 10px}
 
 /* ---------- 棋盘 ---------- */
-#board{display:grid;grid-template-columns:repeat(11,var(--s));grid-template-rows:repeat(9,var(--s));position:relative}
+#board{display:grid;grid-template-columns:repeat(13,var(--s));grid-template-rows:repeat(13,var(--h));position:relative}
 .cell{
-  background:var(--tile);color:var(--ink);border:1px solid #2a2140;
-  display:flex;align-items:center;justify-content:center;text-align:center;
-  font-size:clamp(7.5px,calc(var(--s)*.25),13px);line-height:1.15;padding:1px;position:relative;
+  background:var(--tile);color:var(--ink);box-shadow:inset 0 0 0 1px #2a2140;
+  display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;
+  font-size:clamp(6.5px,calc(var(--s)*.23),11.5px);line-height:1.12;padding:2px;position:relative;
 }
-.cell.start{background:#d9e6ff;font-weight:700}
-.cell.again{background:#d7f3e3}
-.cell.back{background:#ffe0e0}
-.cell.home{background:#ffc9c9;color:#b00020;font-weight:700}
-.cell.skip{background:#e6e0f2}
-.cell.fwd{background:#fff0c2}
-.cell.s0{background:#cfe0ff}
-.cell.s1{background:#ffe9b3}
-.hangar{
-  grid-row-end:span 3;grid-column-end:span 3;margin:4px;border-radius:16px;
-  display:flex;align-items:center;justify-content:center;font-size:12px;position:relative;
-  border:2px dashed;
+.cell.c0,.cell.s0{background:#8cc3f5}
+.cell.c1,.cell.s1{background:#ffd361}
+.cell.red,.cell.home{color:#c4001f;font-weight:700}
+.cell.cur{box-shadow:inset 0 0 0 3px var(--rose)}
+.zone{
+  margin:5px;border-radius:16px;border:2px dashed;position:relative;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;font-weight:600;gap:6px
 }
-.hangar b{position:absolute;top:6px;left:0;right:0;text-align:center;font-weight:600}
 #h0{grid-area:1/1/4/4;border-color:var(--p1);color:var(--p1)}
-#h1{grid-area:7/9/10/12;border-color:var(--p2);color:var(--p2)}
+#h1{grid-area:11/11/14/14;border-color:var(--p2);color:var(--p2)}
+.zone .pieces{position:static;inset:auto}
+.zone .piece{width:calc(var(--s)*.9);height:calc(var(--s)*.9);font-size:calc(var(--s)*.55)}
 #finish{
-  grid-area:5/6;background:var(--purple);border-radius:50%;margin:-6%;z-index:2;
-  display:flex;align-items:center;justify-content:center;text-align:center;
-  font-size:clamp(9px,calc(var(--s)*.3),15px);font-weight:700;color:#fff;position:relative;
+  position:absolute;left:calc(var(--s)*5.6);top:calc(var(--h)*5.5);
+  width:calc(var(--s)*1.8);height:calc(var(--s)*1.8);border-radius:50%;background:var(--purple);z-index:2;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  font-size:clamp(9px,calc(var(--s)*.3),15px);font-weight:700;color:#fff
 }
-#title{grid-area:2/5/4/8;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2px}
-#title strong{font-size:clamp(14px,calc(var(--s)*.46),26px);color:var(--rose);letter-spacing:.08em}
+#finish .pieces{position:static;inset:auto}
+#title{grid-area:2/5/4/10;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2px}
+#title strong{font-size:clamp(14px,calc(var(--s)*.5),28px);color:var(--rose);letter-spacing:.08em}
 #title span{font-size:clamp(8px,calc(var(--s)*.22),12px);opacity:.7}
-#planes{grid-area:7/5/9/8;display:flex;align-items:center;justify-content:center;font-size:calc(var(--s)*1.1);opacity:.2;color:var(--rose);gap:4px}
+.deco{display:flex;align-items:center;justify-content:center;font-size:calc(var(--s)*.9);opacity:.2;gap:calc(var(--s)*.5)}
+#d1{grid-area:4/5/5/10;color:var(--p2)}
+#d2{grid-area:10/5/11/10;color:var(--p1)}
 .pieces{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:1px;pointer-events:none;z-index:3}
 .piece{
-  width:calc(var(--s)*.5);height:calc(var(--s)*.5);border-radius:50%;
-  display:flex;align-items:center;justify-content:center;font-size:calc(var(--s)*.3);
-  border:2px solid #fff;box-shadow:0 2px 6px #0006;transition:transform .15s;
+  width:calc(var(--s)*.46);height:calc(var(--s)*.46);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:calc(var(--s)*.3);font-weight:700;color:#fff;
+  border:2px solid #fff;box-shadow:0 2px 6px #0006
 }
 .piece.p0{background:var(--p1)} .piece.p1{background:var(--p2)}
-.hangar .pieces{position:static;inset:auto;margin-top:14px}
-.hangar .piece{width:calc(var(--s)*.9);height:calc(var(--s)*.9);font-size:calc(var(--s)*.55)}
-.cell.cur{outline:3px solid var(--rose);outline-offset:-3px;z-index:1}
 
 /* ---------- 控制面板 ---------- */
 #panel{
-  width:calc(var(--s)*11);max-width:640px;margin-top:14px;background:var(--panel);
+  width:calc(var(--s)*13);max-width:680px;margin-top:14px;background:var(--panel);
   border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:12px
 }
 .players{display:flex;gap:8px}
@@ -89,7 +87,6 @@ h1{font-size:20px;letter-spacing:.12em;margin:4px 0 10px}
   background:conic-gradient(#5b86d6 0 60deg,#6db36b 60deg 120deg,#e88a4d 120deg 180deg,#9a9a9a 180deg 240deg,#f2c230 240deg 300deg,#5b86d6 300deg 360deg);
   transition:transform 2.4s cubic-bezier(.15,.7,.1,1)
 }
-/* 颜色顺序对应分区 1..6，从正上方顺时针 */
 #wheel i{
   position:absolute;left:50%;top:50%;width:46px;margin-left:-23px;margin-top:-9px;
   font-style:normal;font-size:11px;font-weight:700;text-align:center;color:#fff;line-height:1.1;
@@ -107,13 +104,8 @@ h1{font-size:20px;letter-spacing:.12em;margin:4px 0 10px}
 .note{font-size:11px;opacity:.55;margin-top:12px;text-align:center;max-width:520px;line-height:1.6}
 
 /* ---------- 弹窗 ---------- */
-#mask{
-  position:fixed;inset:0;background:#0009;display:none;align-items:center;justify-content:center;z-index:10;padding:20px
-}
-#modal{
-  background:#fff;color:var(--ink);border-radius:20px;padding:24px 22px 18px;
-  width:min(340px,100%);text-align:center
-}
+#mask{position:fixed;inset:0;background:#0009;display:none;align-items:center;justify-content:center;z-index:10;padding:20px}
+#modal{background:#fff;color:var(--ink);border-radius:20px;padding:24px 22px 18px;width:min(340px,100%);text-align:center}
 #modal h2{font-size:14px;color:var(--rose);margin-bottom:10px;font-weight:600}
 #modal p{font-size:22px;font-weight:700;line-height:1.4;margin-bottom:18px;white-space:pre-line}
 #modal button{background:var(--ink);color:#fff;border:none;border-radius:12px;padding:11px 28px;font-size:15px;cursor:pointer}
@@ -138,26 +130,40 @@ h1{font-size:20px;letter-spacing:.12em;margin:4px 0 10px}
   <div id="log"></div>
   <div class="tools"><button id="rules">规则</button><button id="restart">重新开始</button></div>
 </div>
-<p class="note">饮品可以用任何饮料代替，量力而行。格子文案在 config.js 里，可以随意修改。</p>
+<p class="note">点一下棋盘上的格子可以看完整文字。饮品可以用任何饮料代替，量力而行。格子文案在 config.js 里。</p>
 
 <div id="mask"><div id="modal"><h2 id="mTitle"></h2><p id="mText"></p><button id="mBtn">好的</button></div></div>
 
 <script src="config.js"></script>
 <script>
-/* ============ 棋盘路径（9行 × 11列的十字形） ============ */
-const START = [0, 18];           // 两队在外圈的起点下标
-const LAST = 34;                 // 进度 34 = 终点；0~29 外圈，30~33 冲刺通道
-const RING = (() => {
-  const seg = [['R',4],['D',3],['R',3],['D',2],['L',3],['D',3],['L',4],['U',3],['L',3],['U',2],['R',3],['U',2]];
-  const d = {R:[0,1],L:[0,-1],D:[1,0],U:[-1,0]};
-  let r=0,c=3; const pts=[[r,c]];
-  seg.forEach(([k,n])=>{for(let i=0;i<n;i++){r+=d[k][0];c+=d[k][1];pts.push([r,c]);}});
-  return pts;
-})();
-const STRETCH_POS = [
-  [1,2,3,4].map(c=>[4,c]),
-  [9,8,7,6].map(c=>[4,c])
+/* ============ 棋盘路径：13 列 × 13 行，与原图一致 ============ */
+/* 坐标 [列, 行]，从 0 开始 */
+const RING = [
+  [3,0],[4,0],[5,0],[6,0],[7,0],[8,0],[9,0],           // 0-6   上边
+  [9,1],[9,2],[9,3],                                    // 7-9
+  [10,3],[11,3],[12,3],                                 // 10-12
+  [12,4],[12,5],[12,6],[12,7],[12,8],[12,9],            // 13-18 右边
+  [11,9],[10,9],[9,9],                                  // 19-21
+  [9,10],[9,11],[9,12],                                 // 22-24
+  [8,12],[7,12],[6,12],[5,12],[4,12],[3,12],            // 25-30 下边
+  [3,11],[3,10],[3,9],                                  // 31-33
+  [2,9],[1,9],[0,9],                                    // 34-36
+  [0,8],[0,7],[0,6],[0,5],[0,4],[0,3],                  // 37-42 左边
+  [1,3],[2,3],[3,3],                                    // 43-45
+  [3,2],[3,1]                                           // 46-47
 ];
+const N = RING.length;                 // 48
+const START = [0, 24];                 // 男方 / 女方 的入口下标
+const STAYP = 39;                      // 进度 39 = 停留格
+const LAST = 45;                       // 进度 45 = 终点；40~44 是冲刺通道
+const STRETCH_POS = [
+  [1,2,3,4,5].map(c=>[c,6]),
+  [11,10,9,8,7].map(c=>[c,6])
+];
+// 斜角格（原图里的切角）
+const BL='polygon(0 0,0 100%,100% 100%)', BR='polygon(100% 0,100% 100%,0 100%)',
+      TR='polygon(0 0,100% 0,100% 100%)', TL='polygon(0 0,100% 0,0 100%)';
+const CORNER = {'3,0':BR,'9,0':BL,'12,3':BL,'0,3':BR,'0,9':TR,'3,12':TR,'9,12':TL,'12,9':TL};
 
 /* ============ 状态 ============ */
 let pos, cur, skip, busy, over;
@@ -169,40 +175,44 @@ const other = i => 1-i;
 /* ============ 建棋盘 ============ */
 const board = $('board');
 const cellEls = {};
-const key = (r,c)=>r+','+c;
-const KIND = {t:'',b:'back',f:'fwd',a:'again',h:'home',s:'skip',st:'start'};
+const key = (c,r)=>c+','+r;
+const KIND = {a:'again',b:'back',h:'home',s:'skip',r:'red'};
 
-function makeCell(r,c,data,extra){
+function makeCell(c,r,data,extra){
   const el = document.createElement('div');
-  const k = data[1]||'t';
-  el.className = 'cell '+KIND[k]+(extra?' '+extra:'');
+  const type = data[1]||'', color = data[3];
+  el.className = 'cell '+(KIND[type]||'')+(color!==undefined?' c'+color:'')+(extra?' '+extra:'');
   el.style.gridArea = (r+1)+'/'+(c+1);
+  if(CORNER[key(c,r)]) el.style.clipPath = CORNER[key(c,r)];
   el.textContent = data[0];
+  el.title = data[0];
+  el.onclick = ()=>{ if(!busy && !over && $('mask').style.display!=='flex') say('格子',data[0]); };
   const pc = document.createElement('div'); pc.className='pieces'; el.appendChild(pc);
   board.appendChild(el);
-  cellEls[key(r,c)] = el;
+  cellEls[key(c,r)] = el;
 }
 function buildBoard(){
-  const h0=document.createElement('div'); h0.className='hangar'; h0.id='h0'; h0.innerHTML='<b></b><div class="pieces"></div>';
-  const h1=document.createElement('div'); h1.className='hangar'; h1.id='h1'; h1.innerHTML='<b></b><div class="pieces"></div>';
-  board.append(h0,h1);
+  [0,1].forEach(i=>{
+    const z=document.createElement('div'); z.className='zone'; z.id='h'+i;
+    z.innerHTML='<span></span><div class="pieces"></div>'; board.appendChild(z);
+  });
   RING.forEach((p,i)=>makeCell(p[0],p[1],CONFIG.ring[i]));
   CONFIG.stretch.forEach((arr,pi)=>arr.forEach((d,j)=>makeCell(STRETCH_POS[pi][j][0],STRETCH_POS[pi][j][1],d,'s'+pi)));
   const fin=document.createElement('div'); fin.id='finish'; fin.innerHTML='终点<div class="pieces"></div>'; board.appendChild(fin);
   const t=document.createElement('div'); t.id='title'; t.innerHTML='<strong>情侣飞行棋</strong><span>先到终点者获胜</span>'; board.appendChild(t);
-  const pl=document.createElement('div'); pl.id='planes'; pl.textContent='♥'; board.appendChild(pl);
+  ['d1','d2'].forEach(id=>{const d=document.createElement('div'); d.id=id; d.className='deco'; d.textContent='♥ ♥ ♥'; board.appendChild(d);});
 }
 
 /* ============ 位置换算 ============ */
-function ringIdx(i,p){ return (START[i]+p)%36; }
+const ringIdx = (i,p)=> (START[i]+p)%N;
 function cellOf(i,p){
-  if(p<=29) return RING[ringIdx(i,p)];
-  if(p<=33) return STRETCH_POS[i][p-30];
+  if(p<=STAYP) return RING[ringIdx(i,p)];
+  if(p<LAST) return STRETCH_POS[i][p-STAYP-1];
   return null;
 }
 function dataOf(i,p){
-  if(p<=29) return CONFIG.ring[ringIdx(i,p)];
-  return CONFIG.stretch[i][p-30];
+  if(p<=STAYP) return CONFIG.ring[ringIdx(i,p)];
+  return CONFIG.stretch[i][p-STAYP-1];
 }
 
 /* ============ 渲染 ============ */
@@ -215,20 +225,20 @@ function render(){
     let host;
     if(pos[i]<0) host = document.querySelector('#h'+i+' .pieces');
     else if(pos[i]===LAST) host = document.querySelector('#finish .pieces');
-    else { const [r,c]=cellOf(i,pos[i]); host = cellEls[key(r,c)].querySelector('.pieces'); }
+    else { const [c,r]=cellOf(i,pos[i]); host = cellEls[key(c,r)].querySelector('.pieces'); }
     host.appendChild(pc);
   });
-  if(pos[cur]>=0 && pos[cur]<LAST){ const [r,c]=cellOf(cur,pos[cur]); cellEls[key(r,c)].classList.add('cur'); }
+  if(pos[cur]>=0 && pos[cur]<LAST){ const [c,r]=cellOf(cur,pos[cur]); cellEls[key(c,r)].classList.add('cur'); }
   $('h0').firstChild.textContent = name(0);
   $('h1').firstChild.textContent = name(1);
   [0,1].forEach(i=>{
     $('pl'+i).classList.toggle('on',cur===i);
     $('st'+i).textContent = pos[i]<0 ? '未出发' : pos[i]===LAST ? '到达终点' : '已前进 '+pos[i]+' / '+LAST+' 格' + (skip[i]?' · 休息中':'');
   });
-  const inBase = pos[cur]<0;
-  $('wheelWrap').style.display = inBase ? 'block' : 'none';
-  $('dice').style.display = inBase ? 'none' : 'flex';
-  $('go').textContent = over ? '游戏结束' : name(cur)+(inBase ? '：转转盘' : '：掷骰子');
+  const notStarted = pos[cur]<0;
+  $('wheelWrap').style.display = notStarted ? 'block' : 'none';
+  $('dice').style.display = notStarted ? 'none' : 'flex';
+  $('go').textContent = over ? '游戏结束' : name(cur)+(notStarted ? '：转转盘' : '：掷骰子');
   $('go').disabled = busy || over;
 }
 function log(s){ const l=$('log'); l.innerHTML = s+'<br>'+l.innerHTML; }
@@ -263,26 +273,53 @@ function buildWheel(){
   });
 }
 async function spinWheel(){
-  const n = Math.floor(Math.random()*6);           // 0~5
+  const n = Math.floor(Math.random()*6);
   const a = (n+.5)*60;
-  const base = wheelRot % 360;
-  wheelRot += 360*4 + ((360-a) - base + 360) % 360;
+  wheelRot += 360*4 + ((360-a) - (wheelRot%360) + 360) % 360;
   $('wheel').style.transform='rotate('+wheelRot+'deg)';
   await sleep(matchMedia('(prefers-reduced-motion:reduce)').matches ? 100 : 2600);
   return CONFIG.wheel[n];
 }
 
 /* ============ 移动 ============ */
+// 向前走 steps 步：在停留格必须停下（下回合才能进通道）；到终点后多出的步数折返
 async function walk(i,steps){
-  let p=pos[i], dir=1;
+  const from=pos[i]; let p=from, dir=1;
   for(let k=0;k<steps;k++){
     if(p===LAST) dir=-1;
+    if(dir>0 && p===STAYP && from<STAYP) break;
     p+=dir; pos[i]=p; render(); await sleep(230);
   }
 }
 async function stepTo(i,target){
   const dir = target>pos[i]?1:-1;
   while(pos[i]!==target){ pos[i]+=dir; render(); await sleep(200); }
+}
+
+/* ============ 格子效果 ============ */
+// 返回 true 表示获得再投一次
+async function applyCell(me){
+  const p=pos[me];
+  if(p<=0 || p>=LAST) return false;               // 入口格不触发
+  const [txt,type,n,color]=dataOf(me,p);
+  const t=type||'';
+  if(t===''||t==='r'){ await say(name(me)+' · 互动',txt,'完成'); return false; }
+  if(t==='b'){ await say(name(me),txt); await stepTo(me,Math.max(0,p-n)); return false; }
+  if(t==='a'){ await say(name(me),'再投一次！'); return true; }
+  if(t==='h'){ await say(name(me),'返回起点，重新出发'); pos[me]=-1; return false; }
+  if(t==='s'){ await say(name(me),'下一轮休息'); skip[me]=true; return false; }
+  if(t==='stay'){
+    if(color===me && p===STAYP) await say(name(me),'在此停留，下回合进入终点通道');
+    return false;
+  }
+  if(t==='j'){
+    if(color!==me) return false;
+    await say(name(me)+' · 飞跃',txt,'完成');
+    await say(name(me),'飞跃！前进 '+n+' 格');
+    await stepTo(me,Math.min(STAYP,p+n));
+    return applyCell(me);
+  }
+  return false;
 }
 
 /* ============ 回合 ============ */
@@ -318,21 +355,13 @@ async function act(){
     if(pos[me]===LAST) return win(me);
     if(d===6 && CONFIG.sixAgain) extra=true;
 
-    // 追上对方：把对方送回起点
-    if(pos[me]<=29 && pos[op]>=0 && pos[op]<=29 && ringIdx(me,pos[me])===ringIdx(op,pos[op])){
+    // 追上对方：对方回起点
+    if(pos[me]<=STAYP && pos[op]>=0 && pos[op]<=STAYP && ringIdx(me,pos[me])===ringIdx(op,pos[op])){
       pos[op]=-1; render();
       await say('撞上了！', name(me)+' 追上了 '+name(op)+'，对方回到起点');
       log(name(op)+' 被送回起点');
     }
-    // 格子效果
-    const [txt,type,n] = dataOf(me,pos[me]);
-    const t = type||'t';
-    if(t==='t'){ await say(name(me)+' · 互动',txt,'完成'); }
-    else if(t==='b'){ await say(name(me),txt); await stepTo(me,Math.max(0,pos[me]-n)); }
-    else if(t==='f'){ await say(name(me),txt); await stepTo(me,Math.min(33,pos[me]+n)); }
-    else if(t==='a'){ await say(name(me),'再投一次！'); extra=true; }
-    else if(t==='h'){ await say(name(me),'返回起点，重新出发'); pos[me]=-1; extra=false; }
-    else if(t==='s'){ await say(name(me),'下一轮休息'); skip[me]=true; }
+    if(await applyCell(me)) extra=true;
   }
 
   if(extra && !over){ log(name(me)+' 再来一次'); busy=false; render(); }
@@ -357,7 +386,7 @@ function start(){
 $('go').onclick = act;
 $('restart').onclick = ()=>{ if(!busy || over) start(); else log('请先完成当前动作'); };
 $('rules').onclick = ()=>say('规则',
- '1. 先转转盘，转到「出发」才能上棋盘。\n2. 之后轮流掷骰子，按点数前进。\n3. 追上对方的棋子，对方回起点。\n4. 踩到格子就完成上面的内容。\n5. 先到终点的人获胜，点数过头会折返。');
+ '1. 先转转盘，转到「出发」才能上棋盘。\n2. 轮流掷骰子，顺时针前进。\n3. 追上对方的棋子，对方回起点。\n4. 踩到格子就完成上面的内容。\n5. 走到自己的停留格要停一下，下回合才能进终点通道。\n6. 飞跃格：本方颜色的格子，完成任务后前进 12 格。\n7. 先到终点的人获胜，点数过头会折返。');
 ['n0','n1'].forEach(id=>$(id).addEventListener('input',()=>{ if(pos) render(); }));
 
 buildBoard(); buildWheel(); start();
