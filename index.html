@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>情侣飞行棋</title>
+<style>
+:root{
+  --bg:#1f1a33; --panel:#2b2547; --tile:#f8f1f4; --ink:#2a2140;
+  --p1:#4d8dff; --p2:#ffb82e; --rose:#ff6b8b; --green:#5bc48a; --purple:#6b3fa0;
+  --s:min(calc((100vw - 16px) / 11), 60px);
+}
+*{box-sizing:border-box;margin:0}
+html,body{background:var(--bg);color:#f4eefc;font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px 8px 40px}
+h1{font-size:20px;letter-spacing:.12em;margin:4px 0 10px}
+
+/* ---------- 棋盘 ---------- */
+#board{display:grid;grid-template-columns:repeat(11,var(--s));grid-template-rows:repeat(9,var(--s));position:relative}
+.cell{
+  background:var(--tile);color:var(--ink);border:1px solid #2a2140;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:clamp(7.5px,calc(var(--s)*.25),13px);line-height:1.15;padding:1px;position:relative;
+}
+.cell.start{background:#d9e6ff;font-weight:700}
+.cell.again{background:#d7f3e3}
+.cell.back{background:#ffe0e0}
+.cell.home{background:#ffc9c9;color:#b00020;font-weight:700}
+.cell.skip{background:#e6e0f2}
+.cell.fwd{background:#fff0c2}
+.cell.s0{background:#cfe0ff}
+.cell.s1{background:#ffe9b3}
+.hangar{
+  grid-row-end:span 3;grid-column-end:span 3;margin:4px;border-radius:16px;
+  display:flex;align-items:center;justify-content:center;font-size:12px;position:relative;
+  border:2px dashed;
+}
+.hangar b{position:absolute;top:6px;left:0;right:0;text-align:center;font-weight:600}
+#h0{grid-area:1/1/4/4;border-color:var(--p1);color:var(--p1)}
+#h1{grid-area:7/9/10/12;border-color:var(--p2);color:var(--p2)}
+#finish{
+  grid-area:5/6;background:var(--purple);border-radius:50%;margin:-6%;z-index:2;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:clamp(9px,calc(var(--s)*.3),15px);font-weight:700;color:#fff;position:relative;
+}
+#title{grid-area:2/5/4/8;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2px}
+#title strong{font-size:clamp(14px,calc(var(--s)*.46),26px);color:var(--rose);letter-spacing:.08em}
+#title span{font-size:clamp(8px,calc(var(--s)*.22),12px);opacity:.7}
+#planes{grid-area:7/5/9/8;display:flex;align-items:center;justify-content:center;font-size:calc(var(--s)*.8);opacity:.25;gap:4px}
+.pieces{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:1px;pointer-events:none;z-index:3}
+.piece{
+  width:calc(var(--s)*.5);height:calc(var(--s)*.5);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:calc(var(--s)*.3);
+  border:2px solid #fff;box-shadow:0 2px 6px #0006;transition:transform .15s;
+}
+.piece.p0{background:var(--p1)} .piece.p1{background:var(--p2)}
+.hangar .pieces{position:static;inset:auto;margin-top:14px}
+.hangar .piece{width:calc(var(--s)*.9);height:calc(var(--s)*.9);font-size:calc(var(--s)*.55)}
+.cell.cur{outline:3px solid var(--rose);outline-offset:-3px;z-index:1}
+
+/* ---------- 控制面板 ---------- */
+#panel{
+  width:calc(var(--s)*11);max-width:640px;margin-top:14px;background:var(--panel);
+  border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:12px
+}
+.players{display:flex;gap:8px}
+.pl{flex:1;border-radius:12px;padding:8px 10px;border:2px solid transparent;background:#ffffff0d;font-size:12px}
+.pl.on{border-color:var(--rose);background:#ffffff1a}
+.pl input{
+  background:none;border:none;border-bottom:1px solid #ffffff44;color:inherit;
+  font-size:15px;width:100%;padding:2px 0;font-weight:600;outline:none
+}
+.pl.a input{color:var(--p1)} .pl.b input{color:var(--p2)}
+.pl small{display:block;margin-top:4px;opacity:.7}
+#stage{display:flex;align-items:center;justify-content:center;gap:22px;min-height:132px}
+#dice{
+  width:84px;height:84px;border-radius:18px;background:#fff;color:var(--ink);
+  display:flex;align-items:center;justify-content:center;font-size:58px;box-shadow:0 4px 0 #0004
+}
+#dice.roll{animation:shake .5s}
+@keyframes shake{25%{transform:rotate(-14deg)}75%{transform:rotate(14deg)}}
+#wheelWrap{position:relative;width:132px;height:132px;display:none}
+#wheelWrap::after{
+  content:"";position:absolute;top:-8px;left:50%;margin-left:-8px;
+  border:8px solid transparent;border-top:14px solid var(--rose);z-index:2
+}
+#wheel{
+  width:100%;height:100%;border-radius:50%;position:relative;border:3px solid #fff;
+  background:conic-gradient(#5b86d6 0 60deg,#6db36b 60deg 120deg,#e88a4d 120deg 180deg,#9a9a9a 180deg 240deg,#f2c230 240deg 300deg,#5b86d6 300deg 360deg);
+  transition:transform 2.4s cubic-bezier(.15,.7,.1,1)
+}
+/* 颜色顺序对应分区 1..6，从正上方顺时针 */
+#wheel i{
+  position:absolute;left:50%;top:50%;width:46px;margin-left:-23px;margin-top:-9px;
+  font-style:normal;font-size:11px;font-weight:700;text-align:center;color:#fff;line-height:1.1;
+  text-shadow:0 1px 2px #0008
+}
+#go{
+  background:var(--rose);color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:700;
+  padding:14px;cursor:pointer;box-shadow:0 4px 0 #b84660
+}
+#go:active{transform:translateY(3px);box-shadow:0 1px 0 #b84660}
+#go:disabled{opacity:.5;cursor:default}
+#log{font-size:12.5px;opacity:.8;line-height:1.6;max-height:92px;overflow:auto}
+.tools{display:flex;gap:8px;justify-content:flex-end;font-size:12px}
+.tools button{background:#ffffff14;color:inherit;border:none;border-radius:8px;padding:6px 10px;cursor:pointer}
+.note{font-size:11px;opacity:.55;margin-top:12px;text-align:center;max-width:520px;line-height:1.6}
+
+/* ---------- 弹窗 ---------- */
+#mask{
+  position:fixed;inset:0;background:#0009;display:none;align-items:center;justify-content:center;z-index:10;padding:20px
+}
+#modal{
+  background:#fff;color:var(--ink);border-radius:20px;padding:24px 22px 18px;
+  width:min(340px,100%);text-align:center
+}
+#modal h2{font-size:14px;color:var(--rose);margin-bottom:10px;font-weight:600}
+#modal p{font-size:22px;font-weight:700;line-height:1.4;margin-bottom:18px;white-space:pre-line}
+#modal button{background:var(--ink);color:#fff;border:none;border-radius:12px;padding:11px 28px;font-size:15px;cursor:pointer}
+@media (prefers-reduced-motion:reduce){#wheel{transition:none}#dice.roll{animation:none}}
+</style>
+</head>
+<body>
+
+<h1>情侣飞行棋</h1>
+<div id="board"></div>
+
+<div id="panel">
+  <div class="players">
+    <div class="pl a" id="pl0"><input id="n0" value="蓝队" maxlength="8" aria-label="玩家一名字"><small id="st0"></small></div>
+    <div class="pl b" id="pl1"><input id="n1" value="黄队" maxlength="8" aria-label="玩家二名字"><small id="st1"></small></div>
+  </div>
+  <div id="stage">
+    <div id="dice">⚀</div>
+    <div id="wheelWrap"><div id="wheel"></div></div>
+  </div>
+  <button id="go">掷骰子</button>
+  <div id="log"></div>
+  <div class="tools"><button id="rules">规则</button><button id="restart">重新开始</button></div>
+</div>
+<p class="note">饮品可以用任何饮料代替，量力而行。格子文案在源码顶部的 CONFIG 里，可以随意修改。</p>
+
+<div id="mask"><div id="modal"><h2 id="mTitle"></h2><p id="mText"></p><button id="mBtn">好的</button></div></div>
+
+<script>
+/* =====================================================
+   CONFIG —— 想改玩法，只需要改这一段
+   类型：t=互动任务  b=后退N格  f=前进N格  a=再投一次
+         h=返回起点（回机库）  s=下一轮休息  st=起点（无效果）
+   ===================================================== */
+const CONFIG = {
+  sixAgain: false,   // 掷到 6 是否再投一次（默认关闭）
+  prize: "获胜者可以让对方做一件小事 🎁",
+  // 外圈 36 格，顺时针。第 0 格是蓝队起点，第 18 格是黄队起点
+  ring: [
+    ["起飞","st"],["夸对方三句"],["喝半杯"],["比个爱心合照"],["抱一抱10秒"],["后退2格","b",2],
+    ["说句情话"],["休息一轮","s"],["亲亲脸颊"],["肩膀按摩1分钟"],["前进2格","f",2],["真心话"],
+    ["喝一口"],["后退3格","b",3],["十指相扣30秒"],["学对方说话"],["再投一次","a"],["深情对视10秒"],
+    ["起飞","st"],["讲一段甜蜜回忆"],["回起点","h"],["喝半杯"],["摸摸头30秒"],["休息一轮","s"],
+    ["说出对方的优点"],["后退2格","b",2],["唱一句歌"],["前进3格","f",3],["拥抱20秒"],["喝一口"],
+    ["真心话"],["说句夸奖的话"],["捶背1分钟"],["后退3格","b",3],["模仿一个表情"],["喝半杯"]
+  ],
+  // 终点前的冲刺通道，每队 4 格
+  stretch: [
+    [["夸对方三句"],["抱一抱"],["真心话"],["喝一口"]],
+    [["说句情话"],["牵手10秒"],["真心话"],["喝一口"]]
+  ],
+  // 转盘（起飞前使用），从正上方顺时针 1~6
+  wheel: [
+    { label:"喝一口", act:"sip" },
+    { label:"再转一次", act:"again" },
+    { label:"亲一下", act:"kiss" },
+    { label:"喝一口", act:"sip" },
+    { label:"起飞", act:"enter" },
+    { label:"起飞", act:"enter" }
+  ]
+};
+
+/* ============ 棋盘路径（9行 × 11列的十字形） ============ */
+const START = [0, 18];           // 两队在外圈的起点下标
+const LAST = 34;                 // 进度 34 = 终点；0~29 外圈，30~33 冲刺通道
+const RING = (() => {
+  const seg = [['R',4],['D',3],['R',3],['D',2],['L',3],['D',3],['L',4],['U',3],['L',3],['U',2],['R',3],['U',2]];
+  const d = {R:[0,1],L:[0,-1],D:[1,0],U:[-1,0]};
+  let r=0,c=3; const pts=[[r,c]];
+  seg.forEach(([k,n])=>{for(let i=0;i<n;i++){r+=d[k][0];c+=d[k][1];pts.push([r,c]);}});
+  return pts;
+})();
+const STRETCH_POS = [
+  [1,2,3,4].map(c=>[4,c]),
+  [9,8,7,6].map(c=>[4,c])
+];
+
+/* ============ 状态 ============ */
+let pos, cur, skip, busy, over;
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+const name = i => $('n'+i).value.trim() || (i? '黄队':'蓝队');
+const other = i => 1-i;
+
+/* ============ 建棋盘 ============ */
+const board = $('board');
+const cellEls = {};
+const key = (r,c)=>r+','+c;
+const KIND = {t:'',b:'back',f:'fwd',a:'again',h:'home',s:'skip',st:'start'};
+
+function makeCell(r,c,data,extra){
+  const el = document.createElement('div');
+  const k = data[1]||'t';
+  el.className = 'cell '+KIND[k]+(extra?' '+extra:'');
+  el.style.gridArea = (r+1)+'/'+(c+1);
+  el.textContent = data[0];
+  const pc = document.createElement('div'); pc.className='pieces'; el.appendChild(pc);
+  board.appendChild(el);
+  cellEls[key(r,c)] = el;
+}
+function buildBoard(){
+  const h0=document.createElement('div'); h0.className='hangar'; h0.id='h0'; h0.innerHTML='<b></b><div class="pieces"></div>';
+  const h1=document.createElement('div'); h1.className='hangar'; h1.id='h1'; h1.innerHTML='<b></b><div class="pieces"></div>';
+  board.append(h0,h1);
+  RING.forEach((p,i)=>makeCell(p[0],p[1],CONFIG.ring[i]));
+  CONFIG.stretch.forEach((arr,pi)=>arr.forEach((d,j)=>makeCell(STRETCH_POS[pi][j][0],STRETCH_POS[pi][j][1],d,'s'+pi)));
+  const fin=document.createElement('div'); fin.id='finish'; fin.innerHTML='终点<div class="pieces"></div>'; board.appendChild(fin);
+  const t=document.createElement('div'); t.id='title'; t.innerHTML='<strong>情侣飞行棋</strong><span>先到终点者获胜</span>'; board.appendChild(t);
+  const pl=document.createElement('div'); pl.id='planes'; pl.textContent='✈✈'; board.appendChild(pl);
+}
+
+/* ============ 位置换算 ============ */
+function ringIdx(i,p){ return (START[i]+p)%36; }
+function cellOf(i,p){
+  if(p<=29) return RING[ringIdx(i,p)];
+  if(p<=33) return STRETCH_POS[i][p-30];
+  return null;
+}
+function dataOf(i,p){
+  if(p<=29) return CONFIG.ring[ringIdx(i,p)];
+  return CONFIG.stretch[i][p-30];
+}
+
+/* ============ 渲染 ============ */
+function render(){
+  document.querySelectorAll('.pieces').forEach(e=>e.innerHTML='');
+  document.querySelectorAll('.cell.cur').forEach(e=>e.classList.remove('cur'));
+  [0,1].forEach(i=>{
+    const pc = document.createElement('div');
+    pc.className='piece p'+i; pc.textContent='✈';
+    let host;
+    if(pos[i]<0) host = document.querySelector('#h'+i+' .pieces');
+    else if(pos[i]===LAST) host = document.querySelector('#finish .pieces');
+    else { const [r,c]=cellOf(i,pos[i]); host = cellEls[key(r,c)].querySelector('.pieces'); }
+    host.appendChild(pc);
+  });
+  if(pos[cur]>=0 && pos[cur]<LAST){ const [r,c]=cellOf(cur,pos[cur]); cellEls[key(r,c)].classList.add('cur'); }
+  $('h0').firstChild.textContent = name(0)+' · 机库';
+  $('h1').firstChild.textContent = name(1)+' · 机库';
+  [0,1].forEach(i=>{
+    $('pl'+i).classList.toggle('on',cur===i);
+    $('st'+i).textContent = pos[i]<0 ? '在机库，等待起飞' : pos[i]===LAST ? '到达终点' : '已前进 '+pos[i]+' / '+LAST+' 格' + (skip[i]?' · 休息中':'');
+  });
+  const inBase = pos[cur]<0;
+  $('wheelWrap').style.display = inBase ? 'block' : 'none';
+  $('dice').style.display = inBase ? 'none' : 'flex';
+  $('go').textContent = over ? '游戏结束' : name(cur)+(inBase ? '：转转盘' : '：掷骰子');
+  $('go').disabled = busy || over;
+}
+function log(s){ const l=$('log'); l.innerHTML = s+'<br>'+l.innerHTML; }
+
+/* ============ 弹窗 ============ */
+function say(title,text,btn='好的'){
+  return new Promise(res=>{
+    $('mTitle').textContent=title; $('mText').textContent=text; $('mBtn').textContent=btn;
+    $('mask').style.display='flex';
+    $('mBtn').onclick=()=>{ $('mask').style.display='none'; res(); };
+  });
+}
+
+/* ============ 骰子 / 转盘 ============ */
+const FACES = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+async function rollDice(){
+  const el=$('dice'); el.classList.add('roll');
+  for(let i=0;i<8;i++){ el.textContent=FACES[Math.floor(Math.random()*6)]; await sleep(60); }
+  const d = 1+Math.floor(Math.random()*6);
+  el.textContent = FACES[d-1]; el.classList.remove('roll');
+  await sleep(250);
+  return d;
+}
+let wheelRot = 0;
+function buildWheel(){
+  const w=$('wheel');
+  CONFIG.wheel.forEach((s,i)=>{
+    const a=(i+.5)*60, e=document.createElement('i');
+    e.textContent=(i+1)+' '+s.label;
+    e.style.transform='rotate('+a+'deg) translateY(-42px)';
+    w.appendChild(e);
+  });
+}
+async function spinWheel(){
+  const n = Math.floor(Math.random()*6);           // 0~5
+  const a = (n+.5)*60;
+  const base = wheelRot % 360;
+  wheelRot += 360*4 + ((360-a) - base + 360) % 360;
+  $('wheel').style.transform='rotate('+wheelRot+'deg)';
+  await sleep(matchMedia('(prefers-reduced-motion:reduce)').matches ? 100 : 2600);
+  return CONFIG.wheel[n];
+}
+
+/* ============ 移动 ============ */
+async function walk(i,steps){
+  let p=pos[i], dir=1;
+  for(let k=0;k<steps;k++){
+    if(p===LAST) dir=-1;
+    p+=dir; pos[i]=p; render(); await sleep(230);
+  }
+}
+async function stepTo(i,target){
+  const dir = target>pos[i]?1:-1;
+  while(pos[i]!==target){ pos[i]+=dir; render(); await sleep(200); }
+}
+
+/* ============ 回合 ============ */
+async function nextTurn(){
+  cur = other(cur); render();
+  if(skip[cur]){
+    skip[cur]=false;
+    await say('下一轮休息', name(cur)+' 这一轮休息，好好喝口水 ☕');
+    return nextTurn();
+  }
+  busy=false; render();
+}
+
+async function act(){
+  if(busy||over) return;
+  busy=true; render();
+  const me=cur, op=other(me);
+  let extra=false;
+
+  if(pos[me]<0){
+    /* ----- 机库：转盘起飞 ----- */
+    const r = await spinWheel();
+    log('<b>'+name(me)+'</b> 转到「'+r.label+'」');
+    if(r.act==='sip')   await say(name(me),'喝一口 🥤');
+    if(r.act==='again'){ await say(name(me),'再转一次！'); extra=true; }
+    if(r.act==='kiss')  await say(name(me),'亲一下对方（脸颊也算）💋');
+    if(r.act==='enter'){ pos[me]=0; render(); await say(name(me),'起飞！进入棋盘 ✈️'); }
+  } else {
+    /* ----- 棋盘：掷骰子 ----- */
+    const d = await rollDice();
+    log('<b>'+name(me)+'</b> 掷出 '+d);
+    await walk(me,d);
+    if(pos[me]===LAST) return win(me);
+    if(d===6 && CONFIG.sixAgain) extra=true;
+
+    // 追上对方：把对方送回机库
+    if(pos[me]<=29 && pos[op]>=0 && pos[op]<=29 && ringIdx(me,pos[me])===ringIdx(op,pos[op])){
+      pos[op]=-1; render();
+      await say('撞上了！', name(me)+' 追上了 '+name(op)+'，对方回机库重新起飞');
+      log(name(op)+' 被送回机库');
+    }
+    // 格子效果
+    const [txt,type,n] = dataOf(me,pos[me]);
+    const t = type||'t';
+    if(t==='t'){ await say(name(me)+' · 互动',txt,'完成'); }
+    else if(t==='b'){ await say(name(me),txt); await stepTo(me,Math.max(0,pos[me]-n)); }
+    else if(t==='f'){ await say(name(me),txt); await stepTo(me,Math.min(33,pos[me]+n)); }
+    else if(t==='a'){ await say(name(me),'再投一次！'); extra=true; }
+    else if(t==='h'){ await say(name(me),'返回起点，回机库重新起飞'); pos[me]=-1; extra=false; }
+    else if(t==='s'){ await say(name(me),'下一轮休息'); skip[me]=true; }
+  }
+
+  if(extra && !over){ log(name(me)+' 再来一次'); busy=false; render(); }
+  else await nextTurn();
+}
+
+async function win(i){
+  over=true; render();
+  log('🎉 <b>'+name(i)+'</b> 到达终点');
+  await say('🎉 '+name(i)+' 获胜',CONFIG.prize,'再来一局');
+  start();
+}
+
+/* ============ 开始 / 规则 ============ */
+function start(){
+  pos=[-1,-1]; cur=0; skip=[false,false]; busy=false; over=false;
+  $('log').innerHTML='';
+  $('dice').textContent='⚀';
+  log('新的一局开始，'+name(0)+' 先手。机库里先转转盘，转到「起飞」才能进入棋盘。');
+  render();
+}
+$('go').onclick = act;
+$('restart').onclick = ()=>{ if(!busy || over) start(); else log('请先完成当前动作'); };
+$('rules').onclick = ()=>say('规则',
+ '1. 在机库转转盘，转到「起飞」才能上棋盘。\n2. 之后轮流掷骰子，按点数前进。\n3. 追上对方的棋子，对方回机库。\n4. 踩到格子就完成上面的内容。\n5. 先到终点的人获胜，点数过头会折返。');
+['n0','n1'].forEach(id=>$(id).addEventListener('input',()=>{ if(pos) render(); }));
+
+buildBoard(); buildWheel(); start();
+</script>
+</body>
+</html>
