@@ -46,7 +46,7 @@ h1{font-size:20px;letter-spacing:.12em;margin:4px 0 10px}
 #title{grid-area:2/5/4/8;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2px}
 #title strong{font-size:clamp(14px,calc(var(--s)*.46),26px);color:var(--rose);letter-spacing:.08em}
 #title span{font-size:clamp(8px,calc(var(--s)*.22),12px);opacity:.7}
-#planes{grid-area:7/5/9/8;display:flex;align-items:center;justify-content:center;font-size:calc(var(--s)*.8);opacity:.25;gap:4px}
+#planes{grid-area:7/5/9/8;display:flex;align-items:center;justify-content:center;font-size:calc(var(--s)*1.1);opacity:.2;color:var(--rose);gap:4px}
 .pieces{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:1px;pointer-events:none;z-index:3}
 .piece{
   width:calc(var(--s)*.5);height:calc(var(--s)*.5);border-radius:50%;
@@ -127,8 +127,8 @@ h1{font-size:20px;letter-spacing:.12em;margin:4px 0 10px}
 
 <div id="panel">
   <div class="players">
-    <div class="pl a" id="pl0"><input id="n0" value="蓝队" maxlength="8" aria-label="玩家一名字"><small id="st0"></small></div>
-    <div class="pl b" id="pl1"><input id="n1" value="黄队" maxlength="8" aria-label="玩家二名字"><small id="st1"></small></div>
+    <div class="pl a" id="pl0"><input id="n0" value="男方" maxlength="8" aria-label="男方名字"><small id="st0"></small></div>
+    <div class="pl b" id="pl1"><input id="n1" value="女方" maxlength="8" aria-label="女方名字"><small id="st1"></small></div>
   </div>
   <div id="stage">
     <div id="dice">⚀</div>
@@ -163,7 +163,7 @@ const STRETCH_POS = [
 let pos, cur, skip, busy, over;
 const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
-const name = i => $('n'+i).value.trim() || (i? '黄队':'蓝队');
+const name = i => $('n'+i).value.trim() || (i? '女方':'男方');
 const other = i => 1-i;
 
 /* ============ 建棋盘 ============ */
@@ -190,7 +190,7 @@ function buildBoard(){
   CONFIG.stretch.forEach((arr,pi)=>arr.forEach((d,j)=>makeCell(STRETCH_POS[pi][j][0],STRETCH_POS[pi][j][1],d,'s'+pi)));
   const fin=document.createElement('div'); fin.id='finish'; fin.innerHTML='终点<div class="pieces"></div>'; board.appendChild(fin);
   const t=document.createElement('div'); t.id='title'; t.innerHTML='<strong>情侣飞行棋</strong><span>先到终点者获胜</span>'; board.appendChild(t);
-  const pl=document.createElement('div'); pl.id='planes'; pl.textContent='✈✈'; board.appendChild(pl);
+  const pl=document.createElement('div'); pl.id='planes'; pl.textContent='♥'; board.appendChild(pl);
 }
 
 /* ============ 位置换算 ============ */
@@ -211,7 +211,7 @@ function render(){
   document.querySelectorAll('.cell.cur').forEach(e=>e.classList.remove('cur'));
   [0,1].forEach(i=>{
     const pc = document.createElement('div');
-    pc.className='piece p'+i; pc.textContent='✈';
+    pc.className='piece p'+i; pc.textContent=i?'♀':'♂';
     let host;
     if(pos[i]<0) host = document.querySelector('#h'+i+' .pieces');
     else if(pos[i]===LAST) host = document.querySelector('#finish .pieces');
@@ -219,11 +219,11 @@ function render(){
     host.appendChild(pc);
   });
   if(pos[cur]>=0 && pos[cur]<LAST){ const [r,c]=cellOf(cur,pos[cur]); cellEls[key(r,c)].classList.add('cur'); }
-  $('h0').firstChild.textContent = name(0)+' · 机库';
-  $('h1').firstChild.textContent = name(1)+' · 机库';
+  $('h0').firstChild.textContent = name(0);
+  $('h1').firstChild.textContent = name(1);
   [0,1].forEach(i=>{
     $('pl'+i).classList.toggle('on',cur===i);
-    $('st'+i).textContent = pos[i]<0 ? '在机库，等待起飞' : pos[i]===LAST ? '到达终点' : '已前进 '+pos[i]+' / '+LAST+' 格' + (skip[i]?' · 休息中':'');
+    $('st'+i).textContent = pos[i]<0 ? '未出发' : pos[i]===LAST ? '到达终点' : '已前进 '+pos[i]+' / '+LAST+' 格' + (skip[i]?' · 休息中':'');
   });
   const inBase = pos[cur]<0;
   $('wheelWrap').style.display = inBase ? 'block' : 'none';
@@ -303,13 +303,13 @@ async function act(){
   let extra=false;
 
   if(pos[me]<0){
-    /* ----- 机库：转盘起飞 ----- */
+    /* ----- 未出发：转盘 ----- */
     const r = await spinWheel();
     log('<b>'+name(me)+'</b> 转到「'+r.label+'」');
     if(r.act==='sip')   await say(name(me),'喝一口 🥤');
     if(r.act==='again'){ await say(name(me),'再转一次！'); extra=true; }
     if(r.act==='kiss')  await say(name(me),'亲一下对方（脸颊也算）💋');
-    if(r.act==='enter'){ pos[me]=0; render(); await say(name(me),'起飞！进入棋盘 ✈️'); }
+    if(r.act==='enter'){ pos[me]=0; render(); await say(name(me),'出发！进入棋盘'); }
   } else {
     /* ----- 棋盘：掷骰子 ----- */
     const d = await rollDice();
@@ -318,11 +318,11 @@ async function act(){
     if(pos[me]===LAST) return win(me);
     if(d===6 && CONFIG.sixAgain) extra=true;
 
-    // 追上对方：把对方送回机库
+    // 追上对方：把对方送回起点
     if(pos[me]<=29 && pos[op]>=0 && pos[op]<=29 && ringIdx(me,pos[me])===ringIdx(op,pos[op])){
       pos[op]=-1; render();
-      await say('撞上了！', name(me)+' 追上了 '+name(op)+'，对方回机库重新起飞');
-      log(name(op)+' 被送回机库');
+      await say('撞上了！', name(me)+' 追上了 '+name(op)+'，对方回到起点');
+      log(name(op)+' 被送回起点');
     }
     // 格子效果
     const [txt,type,n] = dataOf(me,pos[me]);
@@ -331,7 +331,7 @@ async function act(){
     else if(t==='b'){ await say(name(me),txt); await stepTo(me,Math.max(0,pos[me]-n)); }
     else if(t==='f'){ await say(name(me),txt); await stepTo(me,Math.min(33,pos[me]+n)); }
     else if(t==='a'){ await say(name(me),'再投一次！'); extra=true; }
-    else if(t==='h'){ await say(name(me),'返回起点，回机库重新起飞'); pos[me]=-1; extra=false; }
+    else if(t==='h'){ await say(name(me),'返回起点，重新出发'); pos[me]=-1; extra=false; }
     else if(t==='s'){ await say(name(me),'下一轮休息'); skip[me]=true; }
   }
 
@@ -351,13 +351,13 @@ function start(){
   pos=[-1,-1]; cur=0; skip=[false,false]; busy=false; over=false;
   $('log').innerHTML='';
   $('dice').textContent='⚀';
-  log('新的一局开始，'+name(0)+' 先手。机库里先转转盘，转到「起飞」才能进入棋盘。');
+  log('新的一局开始，'+name(0)+' 先手。先转转盘，转到「出发」才能进入棋盘。');
   render();
 }
 $('go').onclick = act;
 $('restart').onclick = ()=>{ if(!busy || over) start(); else log('请先完成当前动作'); };
 $('rules').onclick = ()=>say('规则',
- '1. 在机库转转盘，转到「起飞」才能上棋盘。\n2. 之后轮流掷骰子，按点数前进。\n3. 追上对方的棋子，对方回机库。\n4. 踩到格子就完成上面的内容。\n5. 先到终点的人获胜，点数过头会折返。');
+ '1. 先转转盘，转到「出发」才能上棋盘。\n2. 之后轮流掷骰子，按点数前进。\n3. 追上对方的棋子，对方回起点。\n4. 踩到格子就完成上面的内容。\n5. 先到终点的人获胜，点数过头会折返。');
 ['n0','n1'].forEach(id=>$(id).addEventListener('input',()=>{ if(pos) render(); }));
 
 buildBoard(); buildWheel(); start();
