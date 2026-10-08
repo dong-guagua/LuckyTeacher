@@ -8,12 +8,12 @@
 :root{
   --bg:#1f1a33; --panel:#2b2547; --tile:#f8f1f4; --ink:#2a2140;
   --p1:#4d8dff; --p2:#ffb82e; --rose:#ff6b8b; --purple:#6b3fa0;
-  --s:min(calc((100vw - 12px) / 13), 58px);
+  --s:clamp(28px, calc((100vw - 12px) / 13), 58px);
   --h:calc(var(--s) * .86);
 }
 *{box-sizing:border-box;margin:0}
 html,body{background:var(--bg);color:#f4eefc;font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif}
-body{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px 6px 40px}
+body{min-height:100vh;overflow-x:auto;display:flex;flex-direction:column;align-items:center;padding:12px 6px 40px}
 h1{font-size:20px;letter-spacing:.12em;margin:4px 0 10px}
 
 /* ---------- 棋盘 ---------- */
@@ -21,7 +21,7 @@ h1{font-size:20px;letter-spacing:.12em;margin:4px 0 10px}
 .cell{
   background:var(--tile);color:var(--ink);box-shadow:inset 0 0 0 1px #2a2140;
   display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;
-  font-size:clamp(6.5px,calc(var(--s)*.23),11.5px);line-height:1.12;padding:2px;position:relative;
+  font-size:clamp(6px,calc(var(--s)*.2),10.5px);line-height:1.1;padding:1px;position:relative;overflow:hidden;word-break:break-all;
 }
 .cell.c0,.cell.s0{background:#8cc3f5}
 .cell.c1,.cell.s1{background:#ffd361}
@@ -36,8 +36,8 @@ h1{font-size:20px;letter-spacing:.12em;margin:4px 0 10px}
 .zone .pieces{position:static;inset:auto}
 .zone .piece{width:calc(var(--s)*.9);height:calc(var(--s)*.9);font-size:calc(var(--s)*.55)}
 #finish{
-  position:absolute;left:calc(var(--s)*5.6);top:calc(var(--h)*5.5);
-  width:calc(var(--s)*1.8);height:calc(var(--s)*1.8);border-radius:50%;background:var(--purple);z-index:2;
+  position:absolute;left:calc(var(--s)*5.75);top:calc(var(--h)*6.5 - var(--s)*.75);
+  width:calc(var(--s)*1.5);height:calc(var(--s)*1.5);border-radius:50%;background:var(--purple);z-index:2;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
   font-size:clamp(9px,calc(var(--s)*.3),15px);font-weight:700;color:#fff
 }
@@ -84,7 +84,7 @@ h1{font-size:20px;letter-spacing:.12em;margin:4px 0 10px}
 }
 #wheel{
   width:100%;height:100%;border-radius:50%;position:relative;border:3px solid #fff;
-  background:conic-gradient(#5b86d6 0 60deg,#6db36b 60deg 120deg,#e88a4d 120deg 180deg,#9a9a9a 180deg 240deg,#f2c230 240deg 300deg,#5b86d6 300deg 360deg);
+  background:conic-gradient(#5b86d6 0 60deg,#4fae78 60deg 120deg,#e88a4d 120deg 180deg,#8f6fd0 180deg 240deg,#e5a912 240deg 300deg,#e0607e 300deg 360deg);
   transition:transform 2.4s cubic-bezier(.15,.7,.1,1)
 }
 #wheel i{
@@ -110,6 +110,28 @@ h1{font-size:20px;letter-spacing:.12em;margin:4px 0 10px}
 #modal p{font-size:22px;font-weight:700;line-height:1.4;margin-bottom:18px;white-space:pre-line}
 #modal button{background:var(--ink);color:#fff;border:none;border-radius:12px;padding:11px 28px;font-size:15px;cursor:pointer}
 @media (prefers-reduced-motion:reduce){#wheel{transition:none}#dice.roll{animation:none}}
+
+/* 中间一行：靠近终点的两格，文字往外侧靠 */
+.cell.nearL{padding-right:28%}
+.cell.nearR{padding-left:28%}
+/* 斜角格：文字放在可见的三角形里 */
+.cell.k-BR{align-items:flex-end;justify-content:flex-end;padding:0 2px 3px 0}
+.cell.k-BL{align-items:flex-end;justify-content:flex-start;padding:0 0 3px 2px}
+.cell.k-TR{align-items:flex-start;justify-content:flex-end;padding:3px 2px 0 0}
+.cell.k-TL{align-items:flex-start;justify-content:flex-start;padding:3px 0 0 2px}
+.cell[class*="k-"]{text-align:center;font-size:clamp(6px,calc(var(--s)*.19),10px)}
+.cell[class*="k-"] .tx{max-width:56%;word-break:break-all;line-height:1.05}
+.cell.k-BR .tx,.cell.k-TR .tx{text-align:right}
+.cell.k-BL .tx,.cell.k-TL .tx{text-align:left}
+#err{background:#7a1f33;color:#fff;border-radius:10px;padding:10px 14px;margin:10px;font-size:13px;display:none;max-width:560px}
+
+.cell .tx{position:relative;z-index:5;display:block}
+.cell.long .tx{font-size:.82em;line-height:1.05;letter-spacing:-.02em}
+.cell .pieces{align-items:flex-end;padding-bottom:1px;z-index:3}
+.piece{opacity:.92}
+.piece svg{width:62%;height:62%;display:block}
+#finish{z-index:2}
+#finish .lbl{position:relative;z-index:5}
 </style>
 </head>
 <body>
@@ -132,10 +154,12 @@ h1{font-size:20px;letter-spacing:.12em;margin:4px 0 10px}
 </div>
 <p class="note">点一下棋盘上的格子可以看完整文字。饮品可以用任何饮料代替，量力而行。格子文案在 config.js 里。</p>
 
+<div id="err"></div>
 <div id="mask"><div id="modal"><h2 id="mTitle"></h2><p id="mText"></p><button id="mBtn">好的</button></div></div>
 
 <script src="config.js"></script>
 <script>
+if(typeof CONFIG==="undefined"){ const e=document.getElementById("err"); e.style.display="block"; e.textContent="没有找到 config.js：请确认 config.js 和 index.html 在同一个文件夹里。"; throw new Error("config.js missing"); }
 /* ============ 棋盘路径：13 列 × 13 行，与原图一致 ============ */
 /* 坐标 [列, 行]，从 0 开始 */
 const RING = [
@@ -164,6 +188,7 @@ const STRETCH_POS = [
 const BL='polygon(0 0,0 100%,100% 100%)', BR='polygon(100% 0,100% 100%,0 100%)',
       TR='polygon(0 0,100% 0,100% 100%)', TL='polygon(0 0,100% 0,0 100%)';
 const CORNER = {'3,0':BR,'9,0':BL,'12,3':BL,'0,3':BR,'0,9':TR,'3,12':TR,'9,12':TL,'12,9':TL};
+const KNAME = {'3,0':'BR','9,0':'BL','12,3':'BL','0,3':'BR','0,9':'TR','3,12':'TR','9,12':'TL','12,9':'TL'};
 
 /* ============ 状态 ============ */
 let pos, cur, skip, busy, over;
@@ -171,6 +196,10 @@ const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
 const name = i => $('n'+i).value.trim() || (i? '女方':'男方');
 const other = i => 1-i;
+const ICON = [
+  '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14" r="5.2"/><path d="M13.8 10.2L20 4M14.5 4H20v5.5"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5.2"/><path d="M12 14.2V21M8.8 18H15.2"/></svg>'
+];
 
 /* ============ 建棋盘 ============ */
 const board = $('board');
@@ -183,8 +212,10 @@ function makeCell(c,r,data,extra){
   const type = data[1]||'', color = data[3];
   el.className = 'cell '+(KIND[type]||'')+(color!==undefined?' c'+color:'')+(extra?' '+extra:'');
   el.style.gridArea = (r+1)+'/'+(c+1);
-  if(CORNER[key(c,r)]) el.style.clipPath = CORNER[key(c,r)];
-  el.textContent = data[0];
+  if(CORNER[key(c,r)]){ el.style.clipPath = CORNER[key(c,r)]; el.classList.add('k-'+KNAME[key(c,r)]); }
+  if(extra==='s0' && c===5) el.classList.add('nearL');
+  if(extra==='s1' && c===7) el.classList.add('nearR');
+  const tx=document.createElement('span'); tx.className='tx'; tx.textContent=data[0]; if(data[0].length>9) el.classList.add('long'); el.appendChild(tx);
   el.title = data[0];
   el.onclick = ()=>{ if(!busy && !over && $('mask').style.display!=='flex') say('格子',data[0]); };
   const pc = document.createElement('div'); pc.className='pieces'; el.appendChild(pc);
@@ -198,7 +229,7 @@ function buildBoard(){
   });
   RING.forEach((p,i)=>makeCell(p[0],p[1],CONFIG.ring[i]));
   CONFIG.stretch.forEach((arr,pi)=>arr.forEach((d,j)=>makeCell(STRETCH_POS[pi][j][0],STRETCH_POS[pi][j][1],d,'s'+pi)));
-  const fin=document.createElement('div'); fin.id='finish'; fin.innerHTML='终点<div class="pieces"></div>'; board.appendChild(fin);
+  const fin=document.createElement('div'); fin.id='finish'; fin.innerHTML='<span class="lbl">终点</span><div class="pieces"></div>'; board.appendChild(fin);
   const t=document.createElement('div'); t.id='title'; t.innerHTML='<strong>情侣飞行棋</strong><span>先到终点者获胜</span>'; board.appendChild(t);
   ['d1','d2'].forEach(id=>{const d=document.createElement('div'); d.id=id; d.className='deco'; d.textContent='♥ ♥ ♥'; board.appendChild(d);});
 }
@@ -221,7 +252,7 @@ function render(){
   document.querySelectorAll('.cell.cur').forEach(e=>e.classList.remove('cur'));
   [0,1].forEach(i=>{
     const pc = document.createElement('div');
-    pc.className='piece p'+i; pc.textContent=i?'♀':'♂';
+    pc.className='piece p'+i; pc.innerHTML=ICON[i];
     let host;
     if(pos[i]<0) host = document.querySelector('#h'+i+' .pieces');
     else if(pos[i]===LAST) host = document.querySelector('#finish .pieces');
